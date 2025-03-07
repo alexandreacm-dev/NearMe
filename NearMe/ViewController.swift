@@ -5,78 +5,126 @@
 //  Created by Alexandre Marques on 3/5/25.
 //
 
-import UIKit
 import MapKit
+import UIKit
 
 class ViewController: UIViewController {
+
+    var locationManager: CLLocationManager?
 
     private lazy var mapView: MKMapView = {
         let map = MKMapView()
         map.translatesAutoresizingMaskIntoConstraints = false
         map.showsUserLocation = true
-        
-    
+
         return map
     }()
-    
+
     private lazy var searchTextField: UITextField = {
         let textField = UITextField()
-        
+
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.clipsToBounds = true
         textField.placeholder = "Search"
+        textField.textColor = UIColor.black
         textField.backgroundColor = .white
         textField.layer.cornerRadius = 10
         textField.layer.borderColor = UIColor.lightGray.cgColor
-        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 10, height: 0))
+        textField.leftView = UIView(
+            frame: CGRect(x: 0, y: 0, width: 10, height: 0))
         textField.leftViewMode = .always
         textField.returnKeyType = .go
-        
+
         return textField
     }()
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        locationManager?.requestWhenInUseAuthorization()
+        locationManager?.requestAlwaysAuthorization()
+        locationManager?.requestLocation()
+
         setupView()
     }
 
-    
-    private func setupView(){
-//        view.backgroundColor = UIColor.green
+    private func setupView() {
         setHierarchy()
         setConstrants()
     }
-    
-    private func setHierarchy(){
+
+    private func setHierarchy() {
         view.addSubview(searchTextField)
         view.addSubview(mapView)
         view.bringSubviewToFront(searchTextField)
     }
-    
-    private func setConstrants(){
-        let widthAnchor = mapView.widthAnchor.constraint(equalTo: view.widthAnchor)
-        let heightAnchor = mapView.heightAnchor.constraint(equalTo: view.heightAnchor)
-        
-        widthAnchor.isActive = true
-        heightAnchor.isActive = true
-        
-        mapView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        mapView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
-        
+
+    private func setConstrants() {
+        //        mapView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        //        mapView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+        //
+        //        mapView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        //        mapView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
         NSLayoutConstraint.activate([
-            searchTextField.topAnchor.constraint(equalTo: view.topAnchor, constant: 60),
-            searchTextField.heightAnchor.constraint(equalToConstant: 44),
-            searchTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            searchTextField.widthAnchor.constraint(equalToConstant: view.bounds.size.width / 1.2)
+            mapView.widthAnchor.constraint(equalTo: view.widthAnchor),
+            mapView.heightAnchor.constraint(equalTo: view.heightAnchor),
+            mapView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            mapView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
         ])
-        
-//        NSLayoutConstraint.activate([
-//            mapView.topAnchor.constraint(equalTo: view.topAnchor),
-//            mapView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-//            mapView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-//        ])
+
+        NSLayoutConstraint.activate([
+            searchTextField.topAnchor.constraint(
+                equalTo: view.topAnchor, constant: 60),
+            searchTextField.heightAnchor.constraint(equalToConstant: 44),
+            searchTextField.centerXAnchor.constraint(
+                equalTo: view.centerXAnchor),
+            searchTextField.widthAnchor.constraint(
+                equalToConstant: view.bounds.size.width / 1.2),
+        ])
+
+    }
+
+    private func checkLocationAuthorization() {
+        guard let locationManager = locationManager,
+            let location = locationManager.location
+        else { return }
+
+        switch locationManager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            let region = MKCoordinateRegion(
+                center: location.coordinate, latitudinalMeters: 800,
+                longitudinalMeters: 800)
+            mapView.setRegion(region, animated: true)
+
+        case .denied:
+            print("Location services has been denied.")
+        case .notDetermined, .restricted:
+            print("Location cannot be determined or restricted.")
+        @unknown default:
+            print("Unknown error. Unable to get location.")
+        }
+
     }
 
 }
 
+extension ViewController: CLLocationManagerDelegate {
+    func locationManager(
+        _ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]
+    ) {
+        print(locations[0].coordinate.latitude)
+        print(locations[0].coordinate.longitude)
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        checkLocationAuthorization()
+    }
+
+    func locationManager(
+        _ manager: CLLocationManager, didFailWithError error: any Error
+    ) {
+        print(error)
+    }
+}
