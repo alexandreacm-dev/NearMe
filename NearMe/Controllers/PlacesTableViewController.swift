@@ -24,6 +24,15 @@ class PlacesTableViewController: UITableViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "PlaceCell")
     }
     
+    private func calculateDistance(from: CLLocation, to: CLLocation) -> CLLocationDistance {
+        from.distance(from: to)
+    }
+    
+    private func formatDistanceForDisplay(_ distance: CLLocationDistance) -> String {
+        let km = Measurement(value: distance, unit: UnitLength.kilometers )
+        return km.converted(to: .kilometers).formatted()
+    }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         places.count
     }
@@ -36,7 +45,7 @@ class PlacesTableViewController: UITableViewController {
         // cell configuration
         var content = cell.defaultContentConfiguration()
         content.text = place.name
-        content.secondaryText = "Secondary Text"
+        content.secondaryText = formatDistanceForDisplay(calculateDistance(from: userLocation, to: place.location))
         
         cell.contentConfiguration = content
         return cell
