@@ -35,7 +35,4 @@ class PlaceAnnotation: MKPointAnnotation {
     var location: CLLocation {
         mapItem.placemark.location ?? CLLocation.default
     }
-    
-    
-    
 }

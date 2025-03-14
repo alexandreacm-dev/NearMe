@@ -10,9 +10,11 @@ import MapKit
 class ViewController: UIViewController {
 
     var locationManager: CLLocationManager?
+    private var places: [PlaceAnnotation] = []
 
     private lazy var mapView: MKMapView = {
         let map = MKMapView()
+        map.delegate = self
         map.translatesAutoresizingMaskIntoConstraints = false
         map.showsUserLocation = true
 
@@ -138,12 +140,15 @@ class ViewController: UIViewController {
             
             guard let response = response, error == nil else { return }
             
-            let places = response.mapItems.map(PlaceAnnotation.init)
-            places.forEach { place in
+            self?.places = response.mapItems.map(PlaceAnnotation.init)
+            self?.places.forEach { place in
                 self?.mapView.addAnnotation(place)
             }
             
-            self?.presentPlacesSheet(places: places)
+            if let places = self?.places {
+                self?.presentPlacesSheet(places: places)
+            }
+           
         }
         
     }
@@ -162,6 +167,30 @@ extension ViewController: UITextFieldDelegate {
         
         return true
     }
+}
+
+extension ViewController: MKMapViewDelegate {
+    
+    private func clearAllSelections() {
+        self.places = self.places.map { place in
+            place.isSelected = false
+            return place
+        }
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
+        
+        // clear all selections
+        clearAllSelections()
+        
+        guard let selectionAnnotation = annotation as? PlaceAnnotation else { return }
+        let placeAnnotation = self.places.first(where: { $0.id == selectionAnnotation.id })
+        placeAnnotation?.isSelected = true
+        
+        presentPlacesSheet(places: self.places)
+        
+    }
+    
 }
 
 extension ViewController: CLLocationManagerDelegate {
